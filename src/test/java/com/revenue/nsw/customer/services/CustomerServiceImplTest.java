@@ -13,14 +13,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD,
-        methodMode = DirtiesContext.MethodMode.AFTER_METHOD,
-        hierarchyMode = DirtiesContext.HierarchyMode.CURRENT_LEVEL)
+@DirtiesContext
 class CustomerServiceImplTest {
 
     @Autowired
@@ -76,7 +75,7 @@ class CustomerServiceImplTest {
 
     @Test
     void testGetCustomerByIdNotFound() {
-        Mono<CustomerDto> customerDtoMono = customerService.getCustomerById(Long.valueOf(UUID.randomUUID().hashCode()));
+        Mono<CustomerDto> customerDtoMono = customerService.getCustomerById((long) UUID.randomUUID().hashCode());
         StepVerifier.create(customerDtoMono)
                 .expectSubscription()
                 .expectNextCount(0)
@@ -88,7 +87,7 @@ class CustomerServiceImplTest {
         Mono<Long> customerMono = customerService.createCustomer(customerDto);
         StepVerifier.create(customerMono)
                 .expectSubscription()
-                .expectNextMatches(id -> id != null)
+                .expectNextMatches(Objects::nonNull)
                 .verifyComplete();
     }
 

@@ -1,0 +1,40 @@
+spring:
+  profiles:
+    active: dev
+springdoc:
+  api-docs:
+    path: /api-docs
+---
+spring:
+  logging:
+    level:
+      org.springframework.data.r2dbc: Debug
+  r2dbc:
+    url: r2dbc:h2:mem:///customerdb?options=DB_CLOSE_DELAY=1;DB_CLOSE_ON_EXIT=TRUE
+    name: sa
+    password:
+  config:
+    activate:
+      on-profile: dev
+---
+spring:
+  logging:
+    level:
+      org.springframework.data.r2dbc: Debug
+  r2dbc:
+    url: r2dbc:h2:mem:///customerdb?options=DB_CLOSE_DELAY=1;DB_CLOSE_ON_EXIT=TRUE
+    name: sa
+    password:
+  config:
+    activate:
+      on-profile: test
+---
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/test
+    username: postgres
+    password: postgres
+  config:
+    activate:
+      on-profile: prod
+

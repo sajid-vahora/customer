@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 public interface CustomerService {
 
-    Flux<CustomerDto> getAllCustomer();
+    Flux<CustomerDto> getAllCustomer(String name, boolean personFlag);
 
     Mono<CustomerDto> getCustomerById(Long id);
 

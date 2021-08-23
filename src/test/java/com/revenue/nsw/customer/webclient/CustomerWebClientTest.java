@@ -46,7 +46,7 @@ class CustomerWebClientTest {
     }
 
     @Test
-    void getAllCustomers() {
+    void listCustomers() {
         webTestClient.post()
                 .uri(CustomerConstant.CUSTOMER_END_POINT_V1)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -55,12 +55,34 @@ class CustomerWebClientTest {
                 .expectStatus().isCreated();
 
         webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path(CUSTOMER_END_POINT_V1).build())
+                .uri(uriBuilder -> uriBuilder.path(CUSTOMER_END_POINT_V1)
+                        .queryParam("name", "test%")
+                        .queryParam("personFlag", true)
+                        .build())
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
                 .expectBodyList(CustomerDto.class)
                 .consumeWith(result -> assertThat(result.getResponseBody().size()).isNotZero());
+    }
+
+    @Test
+    void listCustomers_BadRequest() {
+        webTestClient.post()
+                .uri(CustomerConstant.CUSTOMER_END_POINT_V1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(fromValue(customerDto))
+                .exchange()
+                .expectStatus().isCreated();
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path(CUSTOMER_END_POINT_V1)
+                        .build())
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody(String.class)
+                .consumeWith(result -> assertThat(result.getResponseBody()).isEqualTo("Missing mandatory parameter firstName"));
     }
 
     @Test
@@ -130,5 +152,31 @@ class CustomerWebClientTest {
                 .exchange()
                 .expectBody(CustomerDto.class)
                 .consumeWith(result -> assertThat(result.getResponseBody().getFirstName()).isEqualTo("testUser"));
+    }
+
+    @Test
+    void updateCustomer_NotFound() {
+
+        final Long id = Long.valueOf(UUID.randomUUID().hashCode());
+        CustomerDto updateCustomerDto = CustomerDto.builder().firstName("testUser").build();
+        webTestClient.put()
+                .uri(uriBuilder -> uriBuilder.path(CUSTOMER_END_POINT_V1_BY_ID).build(id))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(fromValue(updateCustomerDto))
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    void updateCustomer_BadRequest() {
+
+        final Long id = Long.valueOf(UUID.randomUUID().hashCode());
+        webTestClient.put()
+                .uri(uriBuilder -> uriBuilder.path(CUSTOMER_END_POINT_V1_BY_ID).build(id))
+                .contentType(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(String.class)
+                .consumeWith(result -> assertThat(result.getResponseBody()).isEqualTo("Missing request body"));
     }
 }

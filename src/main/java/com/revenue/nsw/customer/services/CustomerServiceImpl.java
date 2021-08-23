@@ -1,14 +1,20 @@
 package com.revenue.nsw.customer.services;
 
 import com.revenue.nsw.customer.domain.Customer;
+import com.revenue.nsw.customer.repositories.CustomerRepository;
 import com.revenue.nsw.customer.web.mappers.CustomerMapper;
 import com.revenue.nsw.customer.web.model.CustomerDto;
-import com.revenue.nsw.customer.repositories.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -16,11 +22,25 @@ import reactor.core.publisher.Mono;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final R2dbcEntityTemplate template;
     private final CustomerMapper customerMapper;
 
     @Override
-    public Flux<CustomerDto> getAllCustomer() {
-        return customerRepository.findAll()
+    public Flux<CustomerDto> getAllCustomer(String name, boolean personFlag) {
+
+        Query query;
+        if (personFlag && !StringUtils.isEmpty(name)) {
+            query = query(where("firstName").like(name).ignoreCase(true)
+                    .and(where("personFlag").is(true)));
+        } else if (!StringUtils.isEmpty(name)) {
+            query = query(where("organizationName").like(name).ignoreCase(true)
+                    .and(where("personFlag").is(false)));
+        } else {
+            query = Query.empty();
+        }
+        return template.select(Customer.class)
+                .matching(query)
+                .all()
                 .map(customerMapper::customerToCustomerDto);
     }
 

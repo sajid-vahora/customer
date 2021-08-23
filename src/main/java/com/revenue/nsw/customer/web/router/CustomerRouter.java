@@ -39,7 +39,7 @@ public class CustomerRouter {
                             parameters = {
                                     @Parameter(name = "id", in = ParameterIn.PATH, required = true)},
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Found", content = @Content(
+                                    @ApiResponse(responseCode = "200", description = "Ok", content = @Content(
                                             schema = @Schema(implementation = CustomerDto.class))),
                                     @ApiResponse(responseCode = "404", description = "NotFound"),
                                     @ApiResponse(responseCode = "500", description = "Internal Server Error")}
@@ -48,12 +48,17 @@ public class CustomerRouter {
                     path = CustomerConstant.CUSTOMER_END_POINT_V1,
                     method = RequestMethod.GET,
                     beanClass = CustomerHandler.class,
-                    beanMethod = "getAllCustomers",
+                    beanMethod = "listCustomers",
                     operation = @Operation(
                             operationId = "customer.getById",
+                            parameters = {
+                                    @Parameter(name = "name", in = ParameterIn.QUERY, required = true, description = "First name of the customer or organization"),
+                                    @Parameter(name = "personFlag", in = ParameterIn.QUERY, description = "Set to true to search individual customer and false to search organization")
+                            },
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Found", content = @Content(
+                                    @ApiResponse(responseCode = "200", description = "Ok", content = @Content(
                                             array = @ArraySchema(schema = @Schema(implementation = CustomerDto.class)))),
+                                    @ApiResponse(responseCode = "400", description = "Bad Request"),
                                     @ApiResponse(responseCode = "500", description = "Internal Server Error")}
                     )),
             @RouterOperation(
@@ -68,11 +73,11 @@ public class CustomerRouter {
                                     content = @Content(
                                             schema = @Schema(implementation = CustomerDto.class))),
                             responses = {
-                                    @ApiResponse(responseCode = "201", description = "created", headers = {
+                                    @ApiResponse(responseCode = "201", description = "Created", headers = {
                                             @Header(name = "Location",
                                                     description = "uri pointing to newly created customer",
-                                                    schema = @Schema(implementation = String.class))
-                                    })
+                                                    schema = @Schema(implementation = String.class))}),
+                                    @ApiResponse(responseCode = "500", description = "Internal Server Error")
                             }
                     )),
             @RouterOperation(
@@ -82,10 +87,18 @@ public class CustomerRouter {
                     beanMethod = "updateCustomer",
                     operation = @Operation(
                             operationId = "customer.update",
+                            parameters = {
+                                    @Parameter(name = "id", in = ParameterIn.PATH, required = true)},
                             requestBody = @RequestBody(
                                     required = true, description = "Enter Request body as Json Object",
                                     content = @Content(
-                                            schema = @Schema(implementation = CustomerDto.class)))))})
+                                            schema = @Schema(implementation = CustomerDto.class))),
+                            responses = {
+                                    @ApiResponse(responseCode = "204", description = "No Content"),
+                                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                                    @ApiResponse(responseCode = "404", description = "Not Found"),
+                                    @ApiResponse(responseCode = "500", description = "Internal Server Error")}
+                    ))})
 
     @Bean
     public RouterFunction<ServerResponse> customerRoute(CustomerHandler customerHandler) {
@@ -93,7 +106,7 @@ public class CustomerRouter {
                 .route(GET(CustomerConstant.CUSTOMER_END_POINT_V1_BY_ID).and(accept(MediaType.APPLICATION_JSON)),
                         customerHandler::getCustomerById)
                 .andRoute(GET(CustomerConstant.CUSTOMER_END_POINT_V1).and(accept(MediaType.APPLICATION_JSON)),
-                        customerHandler::getAllCustomers)
+                        customerHandler::listCustomers)
                 .andRoute(POST(CustomerConstant.CUSTOMER_END_POINT_V1).and(accept(MediaType.APPLICATION_JSON)),
                         customerHandler::createCustomer)
                 .andRoute(PUT(CustomerConstant.CUSTOMER_END_POINT_V1_BY_ID).and(accept(MediaType.APPLICATION_JSON)),
